@@ -1,4 +1,3 @@
-// ── API Config ─────────────────────────────────────────────────────
 const API = {
   auth: "http://127.0.0.1:5001",
   node1: "http://127.0.0.1:5002",
@@ -7,10 +6,8 @@ const API = {
   query: "http://127.0.0.1:5003",
 };
 
-// ── Session State ──────────────────────────────────────────────────
 const session = { token: null, username: null, role: null };
 
-// ── Tab switching ──────────────────────────────────────────────────
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     document
@@ -28,7 +25,6 @@ document.querySelectorAll(".tab").forEach((tab) => {
   });
 });
 
-// ── Utilities ──────────────────────────────────────────────────────
 async function apiFetch(url, opts = {}) {
   const r = await fetch(url, {
     headers: { "Content-Type": "application/json" },
@@ -108,7 +104,6 @@ function renderTable(records, emptyMsg = "No records found.") {
     </div>`;
 }
 
-// ── Auth ───────────────────────────────────────────────────────────
 let authMode = "login";
 function setAuthMode(mode) {
   authMode = mode;
@@ -207,14 +202,12 @@ function updateUserBadge() {
   }
 }
 
-// Enter key in auth form
 ["auth-username", "auth-password"].forEach((id) => {
   document.getElementById(id).addEventListener("keydown", (e) => {
     if (e.key === "Enter") submitAuth();
   });
 });
 
-// ── Records Tab ────────────────────────────────────────────────────
 function updateRecordsTab() {
   const wall = document.getElementById("records-login-wall");
   const main = document.getElementById("records-main");

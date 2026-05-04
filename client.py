@@ -1,15 +1,5 @@
 """
-client.py
----------
-Client-side library for the EHR Blockchain Audit System.
-
-Provides three client classes:
-
-  AuthClient   – register, login, fetch public keys
-  AuditClient  – submit encrypted audit records to a blockchain node
-  QueryClient  – issue authorised queries to the query server
-
-These classes are used by ehr_simulator.py, tamper_demo.py, and run_demo.py.
+For Testing purposes on terminal
 """
 
 import json
@@ -24,12 +14,8 @@ from crypto_utils import (
 )
 from models import AuditRecord
 
-
-# ── AuthClient ────────────────────────────────────────────────────────────────
-
 class AuthClient:
-    """Interacts with the authentication server."""
-
+   
     def __init__(self, auth_url: str = AUTH_SERVER_URL):
         self.auth_url = auth_url
         self.token: Optional[str] = None
@@ -46,7 +32,7 @@ class AuthClient:
         return resp.json()
 
     def login(self, username: str, password: str) -> str:
-        """Login and store the JWT token. Returns the token."""
+      
         resp = requests.post(
             f"{self.auth_url}/login",
             json={"username": username, "password": password},
@@ -60,7 +46,7 @@ class AuthClient:
         return self.token
 
     def get_patient_aes_key(self, patient_id: str) -> bytes:
-        """Fetch the AES key for *patient_id* (caller must be authorised)."""
+       
         resp = requests.post(
             f"{self.auth_url}/patient_key/{patient_id}",
             json={"token": self.token},
@@ -70,7 +56,7 @@ class AuthClient:
         return decode_key(resp.json()["key_b64"])
 
     def get_private_key(self, username: str) -> bytes:
-        """Fetch the RSA private key PEM for *username* (for signing)."""
+    
         resp = requests.post(
             f"{self.auth_url}/private_key/{username}",
             json={"token": self.token},
@@ -84,21 +70,7 @@ class AuthClient:
         resp.raise_for_status()
         return resp.json()
 
-
-# ── AuditClient ───────────────────────────────────────────────────────────────
-
 class AuditClient:
-    """
-    Submits audit records to blockchain nodes as an authorised EHR user.
-
-    Workflow
-    --------
-    1. Login to auth server → get JWT.
-    2. Fetch patient's AES key from auth server.
-    3. Encrypt the AuditRecord JSON with AES-256-CBC.
-    4. Sign the ciphertext with the submitter's RSA private key.
-    5. POST the encrypted blob to an audit node.
-    """
 
     def __init__(self, auth_client: AuthClient, node_url: str = AUDIT_NODE_URLS[0]):
         self.auth  = auth_client
@@ -112,26 +84,17 @@ class AuditClient:
         return self._private_pem
 
     def submit_record(self, record: AuditRecord) -> dict:
-        """
-        Encrypt, sign, and submit *record* to the blockchain node.
-
-        Returns the server's response dict (includes block info).
-        """
-        # 1. Fetch patient's AES key
+      
         aes_key = self.auth.get_patient_aes_key(record.patient_id)
 
-        # 2. Encrypt the canonical record JSON (no signature field)
         plaintext_json    = record.to_json()
         encrypted_record  = aes_encrypt(plaintext_json, aes_key)
 
-        # 3. Sign the ciphertext (proves this EHR user produced the record)
         private_pem = self._get_private_pem()
         signature   = sign_data(encrypted_record, private_pem)
 
-        # 4. Attach signature to record object (for completeness in the model)
         record.signature = signature
 
-        # 5. POST to audit node
         resp = requests.post(
             f"{self.node}/audit/record",
             json={
@@ -147,13 +110,11 @@ class AuditClient:
         return resp.json()
 
     def get_chain(self) -> list:
-        """Retrieve the full blockchain from this node."""
         resp = requests.get(f"{self.node}/chain", timeout=10)
         resp.raise_for_status()
         return resp.json()["chain"]
 
     def validate_chain(self) -> dict:
-        """Ask the node to validate its own chain and return the result."""
         resp = requests.get(f"{self.node}/chain/validate", timeout=10)
         resp.raise_for_status()
         return resp.json()
@@ -164,17 +125,13 @@ class AuditClient:
         return resp.json()
 
 
-# ── QueryClient ───────────────────────────────────────────────────────────────
-
 class QueryClient:
-    """Issues authorised read queries to the query server."""
-
+    
     def __init__(self, auth_client: AuthClient, query_url: str = QUERY_SERVER_URL):
         self.auth      = auth_client
         self.query_url = query_url
 
     def my_records(self) -> dict:
-        """Patient: fetch my own audit records."""
         resp = requests.post(
             f"{self.query_url}/query/my_records",
             json={"token": self.auth.token},
@@ -184,7 +141,6 @@ class QueryClient:
         return resp.json()
 
     def patient_records(self, patient_id: str) -> dict:
-        """Audit company: fetch records for one patient."""
         resp = requests.post(
             f"{self.query_url}/query/patient/{patient_id}",
             json={"token": self.auth.token},
@@ -194,7 +150,6 @@ class QueryClient:
         return resp.json()
 
     def all_records(self) -> dict:
-        """Audit company: fetch ALL records across all patients."""
         resp = requests.post(
             f"{self.query_url}/query/all",
             json={"token": self.auth.token},
@@ -204,7 +159,6 @@ class QueryClient:
         return resp.json()
 
     def records_by_user(self, user_id: str) -> dict:
-        """Audit company: all access events by a specific EHR user."""
         resp = requests.post(
             f"{self.query_url}/query/by_user/{user_id}",
             json={"token": self.auth.token},

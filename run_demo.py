@@ -1,27 +1,4 @@
-"""
-run_demo.py
------------
-End-to-end demonstration of the EHR Blockchain Audit System (Option 2).
 
-What this script does
----------------------
-  1.  Start Auth Server (port 5001)
-  2.  Start three Audit Nodes (ports 5002, 5012, 5022) → decentralised network
-  3.  Start Query Server (port 5003)
-  4.  Wait for all servers to come online
-  5.  Simulate 15 EHR access events → encrypted audit records on the blockchain
-  6.  Demo: Patient queries their own records
-  7.  Demo: Audit company queries all records
-  8.  Demo: Audit company investigates a specific EHR user
-  9.  Demo: Tamper detection & recovery
-  10. Print final chain summary from all three nodes
-
-Usage
------
-    python run_demo.py
-
-All servers are spawned as subprocesses and killed on exit.
-"""
 
 import sys
 import time
@@ -41,9 +18,6 @@ from tamper_demo import run_tamper_demo
 PYTHON = sys.executable   # use the same Python interpreter that runs this script
 
 _procs = []   # keep track of subprocesses so we can kill them at exit
-
-
-# ── Process Management ────────────────────────────────────────────────────────
 
 def _start_server(script: str, port: int) -> subprocess.Popen:
     """Spawn *script* on *port* as a background subprocess."""
@@ -77,8 +51,6 @@ def _wait_for(url: str, retries: int = 30, delay: float = 0.5) -> bool:
     return False
 
 
-# ── Pretty Print Helpers ──────────────────────────────────────────────────────
-
 def _sep(title: str = ""):
     w = 60
     if title:
@@ -89,7 +61,7 @@ def _sep(title: str = ""):
 
 
 def _print_records(records: list, max_rows: int = 8):
-    """Print audit records in a readable table."""
+    
     if not records:
         print("  (no records)")
         return
@@ -105,8 +77,6 @@ def _print_records(records: list, max_rows: int = 8):
     if len(records) > max_rows:
         print(f"  ... and {len(records) - max_rows} more records.")
 
-
-# ── Main Demo ─────────────────────────────────────────────────────────────────
 
 def main():
     signal.signal(signal.SIGINT,  lambda *_: (_kill_all(), sys.exit(0)))
@@ -147,7 +117,6 @@ def main():
     print("  Submitting 15 audit events (encrypted, signed) to Node 1 (port 5002)...\n")
     simulate_ehr_accesses(node_index=0, verbose=True)
 
-    # Give nodes a moment to sync
     time.sleep(1)
 
     # ── Step 4: Show chain status across all nodes ────────────────────────────

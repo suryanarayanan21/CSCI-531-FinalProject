@@ -1,11 +1,3 @@
-"""
-models.py
----------
-Data models for the EHR Blockchain Audit System.
-
-AuditRecord  – one logged EHR access event.
-User         – a registered system principal (patient, audit company, EHR staff).
-"""
 
 import uuid
 import json
@@ -18,20 +10,7 @@ from typing import Optional
 
 @dataclass
 class AuditRecord:
-    """
-    One audit event generated when EHR data is accessed.
-
-    Fields required by the project specification:
-      - timestamp   : ISO-8601 UTC time of the access event
-      - patient_id  : which patient's record was accessed
-      - user_id     : who performed the access (doctor, nurse, admin …)
-      - action_type : create | delete | change | query | print | copy
-
-    Additional fields added for security:
-      - event_id    : unique UUID to prevent replay / duplicate insertion
-      - details     : free-form notes (e.g. "accessed medication list")
-      - signature   : RSA signature over the record by the submitting EHR system
-    """
+    
     patient_id:  str
     user_id:     str
     action_type: str
@@ -44,7 +23,6 @@ class AuditRecord:
         return asdict(self)
 
     def to_json(self) -> str:
-        """Canonical JSON representation used for signing / hashing."""
         d = self.to_dict()
         d.pop("signature", None)   # signature is NOT included in signed payload
         return json.dumps(d, sort_keys=True)
@@ -62,28 +40,17 @@ class AuditRecord:
         )
 
 
-# ── User ─────────────────────────────────────────────────────────────────────
-
 @dataclass
 class User:
-    """
-    A registered principal in the system.
-
-    Roles:
-      patient       – may query only their own audit records
-      audit_company – may query all audit records for any patient
-      ehr_user      – EHR staff who generate audit events; cannot query blockchain
-    """
-    username:     str
+   
+    username: str
     password_hash: str
-    role:          str          # patient | audit_company | ehr_user
-    public_pem:    str          = ""   # RSA-2048 public key (PEM, str)
-    # private_pem is stored separately and NEVER sent over the network
-
+    role: str          
+    public_pem: str = ""   
+    
     VALID_ROLES = {"patient", "audit_company", "ehr_user"}
 
     def to_dict(self) -> dict:
-        """Return a safe dict (no private key, no password hash)."""
         return {
             "username":   self.username,
             "role":       self.role,

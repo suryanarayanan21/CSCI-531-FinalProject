@@ -1,21 +1,5 @@
 """
-ehr_simulator.py
-----------------
-Simulates a real EHR system generating audit events.
-
-In a real deployment the audit record would be generated automatically whenever
-a clinician opens, edits, or exports a patient record.  Here we script a
-realistic set of scenarios:
-
-  - Doctor 1 queries and changes records for several patients
-  - Doctor 2 queries and prints records
-  - Nurse 1 creates and queries records
-  - Admin 1 copies records (administrative transfer)
-
-Each EHR user logs in, gets a JWT, then submits encrypted audit records to
-a blockchain node.  The function returns a summary of submitted events.
-"""
-
+Prefills sample data"""
 import time
 from typing import List
 
@@ -23,8 +7,6 @@ from client import AuthClient, AuditClient
 from models import AuditRecord
 from config import AUDIT_NODE_URLS
 
-
-# ── Simulated EHR Access Scenarios ───────────────────────────────────────────
 
 EHR_SCENARIOS: List[dict] = [
     # ── Doctor 1 morning rounds
@@ -58,20 +40,10 @@ EHR_USER_PASSWORDS = {
 
 
 def simulate_ehr_accesses(node_index: int = 0, verbose: bool = True) -> List[dict]:
-    """
-    Submit all EHR_SCENARIOS as encrypted audit records to the blockchain.
 
-    Parameters
-    ----------
-    node_index : index into AUDIT_NODE_URLS — which node to submit to.
-    verbose    : print progress to stdout.
-
-    Returns a list of result dicts from the audit server.
-    """
     node_url = AUDIT_NODE_URLS[node_index]
     results  = []
 
-    # Cache logged-in EHR user sessions (avoid re-authenticating for each record)
     sessions: dict[str, tuple[AuthClient, AuditClient]] = {}
 
     def _get_session(user_id: str):
@@ -115,9 +87,6 @@ def simulate_ehr_accesses(node_index: int = 0, verbose: bool = True) -> List[dic
         time.sleep(0.05)
 
     return results
-
-
-# ── Entry Point (standalone) ──────────────────────────────────────────────────
 
 if __name__ == "__main__":
     print("=" * 60)

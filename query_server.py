@@ -1,32 +1,3 @@
-"""
-query_server.py
----------------
-Query Server  (port 5003)
-
-Provides authorised read access to audit records stored on the blockchain.
-
-Endpoints
----------
-  POST /query/my_records              – patient queries their own records
-  POST /query/patient/<patient_id>    – audit company queries one patient's records
-  POST /query/all                     – audit company queries ALL records
-  POST /query/by_user/<user_id>       – audit company: all accesses by a specific user
-
-Access Control
---------------
-  - Patients may query ONLY their own records (self-service transparency).
-  - Audit companies may query any patient's records, or all records.
-  - EHR users have no query access.
-
-Decryption
-----------
-  The query server fetches encrypted records from a blockchain node, retrieves
-  the patient's AES key from the auth server (caller must provide a valid token),
-  decrypts each record, and returns plaintext JSON.
-
-  This decryption happens server-side for demo simplicity.  In a production
-  system, the client would hold the private key and decrypt locally.
-"""
 
 import sys
 import json
@@ -41,8 +12,6 @@ from config import JWT_SECRET
 app = Flask(__name__)
 CORS(app)
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _verify_token(token: str) -> dict | None:
     """Call auth server to validate *token*; return payload or None."""
@@ -64,7 +33,6 @@ def _verify_token(token: str) -> dict | None:
 
 
 def _get_aes_key(patient_id: str, token: str) -> bytes | None:
-    """Retrieve the AES key for *patient_id* from the auth server."""
     try:
         resp = requests.post(
             f"{AUTH_SERVER_URL}/patient_key/{patient_id}",
@@ -79,12 +47,7 @@ def _get_aes_key(patient_id: str, token: str) -> bytes | None:
 
 
 def _fetch_chain_from_any_node() -> list:
-    """
-    Retrieve the blockchain from any healthy audit node.
-
-    Tries nodes in order; uses the first one that responds.
-    In a production system you'd pick the node with the longest valid chain.
-    """
+    
     for node_url in AUDIT_NODE_URLS:
         try:
             resp = requests.get(f"{node_url}/chain", timeout=5)
@@ -96,12 +59,7 @@ def _fetch_chain_from_any_node() -> list:
 
 
 def _decrypt_entry(entry: dict, aes_key: bytes) -> dict | None:
-    """
-    Decrypt one blockchain record entry.
-
-    Returns the decoded AuditRecord dict, or None on decryption failure.
-    The plaintext AuditRecord JSON is returned alongside blockchain metadata.
-    """
+    
     try:
         plaintext = aes_decrypt(entry["encrypted_record"], aes_key)
         record    = json.loads(plaintext)
@@ -116,7 +74,6 @@ def _decrypt_entry(entry: dict, aes_key: bytes) -> dict | None:
 
 
 def _entries_from_chain(chain: list) -> list[dict]:
-    """Flatten all record entries from the chain (skip genesis block 0)."""
     entries = []
     for block in chain[1:]:   # block 0 is genesis
         for rec in block.get("records", []):
@@ -128,19 +85,9 @@ def _entries_from_chain(chain: list) -> list[dict]:
     return entries
 
 
-# ── Endpoints ─────────────────────────────────────────────────────────────────
-
 @app.route("/query/my_records", methods=["POST"])
 def query_my_records():
-    """
-    Patient queries their own audit records.
-
-    A patient can see every access event logged for their patient_id — giving
-    them transparency into who accessed their EHR data, when, and what action
-    was taken.
-
-    Body (JSON): { "token": "<patient JWT>" }
-    """
+   
     data  = request.get_json(force=True)
     token = data.get("token", "")
 
@@ -152,7 +99,6 @@ def query_my_records():
 
     patient_id = payload["username"]
 
-    # Fetch chain and filter by patient_id (plaintext metadata — fast)
     try:
         chain = _fetch_chain_from_any_node()
     except RuntimeError as e:
@@ -160,7 +106,6 @@ def query_my_records():
 
     entries = [e for e in _entries_from_chain(chain) if e.get("patient_id") == patient_id]
 
-    # Decrypt records
     aes_key = _get_aes_key(patient_id, token)
     if aes_key is None:
         return jsonify({"error": "Could not retrieve decryption key"}), 500
@@ -176,11 +121,7 @@ def query_my_records():
 
 @app.route("/query/patient/<patient_id>", methods=["POST"])
 def query_patient(patient_id: str):
-    """
-    Audit company queries one patient's records.
-
-    Body (JSON): { "token": "<audit_company JWT>" }
-    """
+    
     data  = request.get_json(force=True)
     token = data.get("token", "")
 
@@ -213,14 +154,7 @@ def query_patient(patient_id: str):
 
 @app.route("/query/all", methods=["POST"])
 def query_all():
-    """
-    Audit company retrieves all records for all patients.
-
-    This is the broadest query — only audit_company role is allowed.
-    Each patient's records are decrypted with that patient's AES key.
-
-    Body (JSON): { "token": "<audit_company JWT>" }
-    """
+    
     data  = request.get_json(force=True)
     token = data.get("token", "")
 
@@ -265,14 +199,7 @@ def query_all():
 
 @app.route("/query/by_user/<user_id>", methods=["POST"])
 def query_by_user(user_id: str):
-    """
-    Audit company retrieves all accesses performed by a specific EHR user.
-
-    Useful for investigating whether a particular doctor / nurse / admin
-    accessed records inappropriately.
-
-    Body (JSON): { "token": "<audit_company JWT>" }
-    """
+   
     data  = request.get_json(force=True)
     token = data.get("token", "")
 
@@ -316,7 +243,7 @@ def query_by_user(user_id: str):
 
 @app.route("/status", methods=["GET"])
 def status():
-    """Health check."""
+   
     try:
         chain = _fetch_chain_from_any_node()
         node_status = "reachable"
@@ -329,9 +256,6 @@ def status():
         "node_status":  node_status,
         "chain_length": chain_len,
     }), 200
-
-
-# ── Entry Point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else QUERY_SERVER_PORT
