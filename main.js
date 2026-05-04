@@ -397,16 +397,19 @@ async function submitRecord() {
     );
     const iv = crypto.getRandomValues(new Uint8Array(16));
     const enc = new TextEncoder();
-    const padded = pkcs7Pad(enc.encode(recordJson));
+    const encoded = enc.encode(recordJson);
     const cipherBuf = await crypto.subtle.encrypt(
       { name: "AES-CBC", iv },
       aesKey,
-      padded,
+      encoded,
     );
     const combined = new Uint8Array(16 + cipherBuf.byteLength);
     combined.set(iv, 0);
     combined.set(new Uint8Array(cipherBuf), 16);
-    const encryptedRecord = btoa(String.fromCharCode(...combined));
+    let _bin = "";
+    for (let i = 0; i < combined.length; i++)
+      _bin += String.fromCharCode(combined[i]);
+    const encryptedRecord = btoa(_bin);
 
     // Step 4: Get private key and sign with RSASSA-PKCS1-v1_5 (fetch from auth server for demo)
     const privData = await apiFetch(
