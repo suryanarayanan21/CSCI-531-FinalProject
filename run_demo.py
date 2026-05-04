@@ -207,7 +207,7 @@ def main():
         print(f"  Error: {e}")
 
     # ── Step 9: Tamper detection ──────────────────────────────────────────────
-    run_tamper_demo(verbose=True)
+    # run_tamper_demo(verbose=True)
 
     # ── Step 10: Chain consistency check across all nodes ─────────────────────
     _sep("Post-Demo Chain Validation (All Nodes)")

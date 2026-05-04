@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MedChain — EHR Audit System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <div class="logo">
+          <div class="logo-icon">🔗</div>
+          <div>
+            <div class="logo-text">MedChain</div>
+            <div class="logo-sub">EHR Blockchain Audit System</div>
+          </div>
+        </div>
+        <div id="user-badge">
+          <div class="badge-dot"></div>
+          <span id="user-badge-text">Not logged in</span>
+        </div>
+      </header>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="auth">⬡ Identity</div>
+        <div class="tab" data-tab="records">⬡ Audit Records</div>
+        <div class="tab" data-tab="submit">⬡ Submit Event</div>
+        <div class="tab" data-tab="health">⬡ System Health</div>
+      </div>
+
+      <div id="tab-auth" class="tab-content active">
+        <div class="auth-layout">
+          <div>
+            <div class="card" style="margin-bottom: 0">
+              <div class="card-header">
+                <div>
+                  <div class="card-title" id="auth-title">Authenticate</div>
+                  <div class="card-sub">Access the EHR Audit Ledger</div>
+                </div>
+                <div class="auth-toggle">
+                  <button
+                    class="auth-toggle-btn active"
+                    id="btn-login-mode"
+                    onclick="setAuthMode('login')">
+                    Login
+                  </button>
+                  <button
+                    class="auth-toggle-btn"
+                    id="btn-reg-mode"
+                    onclick="setAuthMode('register')">
+                    Register
+                  </button>
+                </div>
+              </div>
+
+              <div id="auth-alert"></div>
+
+              <div class="form-row">
+                <label>Username</label>
+                <input
+                  type="text"
+                  id="auth-username"
+                  placeholder="e.g. patient_1"
+                  autocomplete="username" />
+              </div>
+              <div class="form-row">
+                <label>Password</label>
+                <input
+                  type="password"
+                  id="auth-password"
+                  placeholder="••••••••"
+                  autocomplete="current-password" />
+              </div>
+
+              <div id="reg-extra" style="display: none">
+                <div class="form-row">
+                  <label>Role</label>
+                  <select id="auth-role">
+                    <option value="patient">
+                      Patient — view my own audit records
+                    </option>
+                    <option value="audit_company">
+                      Audit Company — view all records
+                    </option>
+                    <option value="ehr_user">
+                      EHR User — submit audit events
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="btn-row">
+                <button
+                  class="btn btn-primary"
+                  id="auth-submit-btn"
+                  onclick="submitAuth()">
+                  <span
+                    class="spinner"
+                    id="auth-spinner"
+                    style="display: none"></span>
+                  <span id="auth-btn-label">Login</span>
+                </button>
+                <button
+                  class="btn btn-ghost btn-sm"
+                  onclick="logout()"
+                  id="logout-btn"
+                  style="display: none">
+                  Logout
+                </button>
+              </div>
+            </div>
+            <div id="session-info" style="display: none; margin-top: 16px">
+              <div class="card" style="margin-bottom: 0">
+                <div
+                  class="card-header"
+                  style="margin-bottom: 12px; padding-bottom: 10px">
+                  <div class="card-title">Active Session</div>
+                </div>
+                <div class="info-box">
+                  <div class="ib-row">
+                    <span>Username</span
+                    ><span class="ib-val" id="si-username">—</span>
+                  </div>
+                  <div class="ib-row">
+                    <span>Role</span><span id="si-role-chip">—</span>
+                  </div>
+                  <div class="ib-row">
+                    <span>Token</span
+                    ><span class="ib-val" id="si-token-short">—</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="auth-info">
+            <h2>Secure Decentralised Audit Ledger</h2>
+            <p>
+              MedChain records every access to Electronic Health Records on a
+              tamper-evident blockchain distributed across three independent
+              audit nodes. All records are encrypted with AES-256 before they
+              reach the chain.
+            </p>
+
+            <div class="role-chips">
+              <div class="role-chip chip-patient">Patient</div>
+              <div class="role-chip chip-auditor">Audit Company</div>
+              <div class="role-chip chip-ehr">EHR User</div>
+            </div>
+
+            <p style="margin-bottom: 14px; font-size: 12px">
+              Quick demo logins:
+            </p>
+            <div class="info-box">
+              <div class="ib-row">
+                <span>Patient</span>
+                <span class="ib-val">patient_1 / pass_p1</span>
+              </div>
+              <div class="ib-row">
+                <span>Audit Co</span>
+                <span class="ib-val">audit_co_1 / pass_ac1</span>
+              </div>
+              <div class="ib-row">
+                <span>Doctor</span>
+                <span class="ib-val">doctor_1 / pass_d1</span>
+              </div>
+              <div class="ib-row">
+                <span>Nurse</span> <span class="ib-val">nurse_1 / pass_n1</span>
+              </div>
+              <div class="ib-row">
+                <span>Admin</span> <span class="ib-val">admin_1 / pass_a1</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-records" class="tab-content">
+        <div id="records-login-wall" style="display: none">
+          <div class="card">
+            <div class="empty">
+              <div class="empty-icon">🔐</div>
+              Please login to view audit records.
+            </div>
+          </div>
+        </div>
+
+        <div id="records-main" style="display: none">
+          <div id="rec-patient-view" style="display: none">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">My Audit Records</div>
+                  <div class="card-sub">
+                    All access events logged for your health record
+                  </div>
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="loadMyRecords()">
+                  <span
+                    class="spinner"
+                    id="rec-p-spinner"
+                    style="display: none"></span>
+                  ↻ Refresh
+                </button>
+              </div>
+              <div id="patient-records-alert"></div>
+              <div id="patient-records-table"></div>
+            </div>
+          </div>
+          <div id="rec-auditor-view" style="display: none">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Record Query Console</div>
+                  <div class="card-sub">
+                    Query audit data across all patients and users
+                  </div>
+                </div>
+              </div>
+              <div id="audit-records-alert"></div>
+
+              <div class="filter-bar">
+                <label>Mode</label>
+                <select id="audit-query-mode" onchange="onQueryModeChange()">
+                  <option value="all">All patients — all records</option>
+                  <option value="patient">Single patient</option>
+                  <option value="user">By EHR user</option>
+                </select>
+
+                <div
+                  id="audit-patient-filter"
+                  style="
+                    display: none;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    flex: 1;
+                  ">
+                  <label>Patient ID</label>
+                  <select id="audit-patient-sel">
+                    <option value="patient_1">patient_1</option>
+                    <option value="patient_2">patient_2</option>
+                    <option value="patient_3">patient_3</option>
+                    <option value="patient_4">patient_4</option>
+                    <option value="patient_5">patient_5</option>
+                    <option value="patient_6">patient_6</option>
+                    <option value="patient_7">patient_7</option>
+                    <option value="patient_8">patient_8</option>
+                    <option value="patient_9">patient_9</option>
+                    <option value="patient_10">patient_10</option>
+                  </select>
+                </div>
+
+                <div
+                  id="audit-user-filter"
+                  style="display: none; align-items: center; gap: 8px; flex: 1">
+                  <label>User ID</label>
+                  <input
+                    type="text"
+                    id="audit-user-input"
+                    placeholder="e.g. doctor_1"
+                    style="flex: 1" />
+                </div>
+
+                <button
+                  class="btn btn-primary btn-sm"
+                  onclick="runAuditQuery()">
+                  <span
+                    class="spinner"
+                    id="rec-a-spinner"
+                    style="display: none"></span>
+                  Query →
+                </button>
+              </div>
+
+              <div id="audit-records-table"></div>
+            </div>
+          </div>
+          <div id="rec-ehr-view" style="display: none">
+            <div class="card">
+              <div class="empty">
+                <div class="empty-icon">🏥</div>
+                EHR Users submit audit records but cannot query the ledger.<br />
+                <span style="font-size: 12px; color: var(--text3)"
+                  >Switch to the "Submit Event" tab to log an EHR access.</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-submit" class="tab-content">
+        <div id="submit-login-wall" style="display: none">
+          <div class="card">
+            <div class="empty">
+              <div class="empty-icon">🔐</div>
+              Login as an
+              <strong style="color: var(--amber)">EHR User</strong> to submit
+              audit events.
+            </div>
+          </div>
+        </div>
+
+        <div id="submit-role-wall" style="display: none">
+          <div class="card">
+            <div class="empty">
+              <div class="empty-icon">🚫</div>
+              Only
+              <strong style="color: var(--amber)">EHR Users</strong> (doctors,
+              nurses, admins) can submit audit events.<br />
+              <span style="font-size: 12px; color: var(--text3)"
+                >Patients and Audit Companies have read-only access.</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div id="submit-main" style="display: none">
+          <div
+            style="
+              display: grid;
+              grid-template-columns: 1fr 400px;
+              gap: 20px;
+              align-items: start;
+            ">
+            <div class="card" style="margin-bottom: 0">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Submit Audit Event</div>
+                  <div class="card-sub">
+                    Record an EHR access to the blockchain — encrypted &amp;
+                    signed
+                  </div>
+                </div>
+              </div>
+
+              <div id="submit-alert"></div>
+
+              <div class="form-cols">
+                <div class="form-row">
+                  <label>Patient ID</label>
+                  <select id="sub-patient">
+                    <option value="patient_1">patient_1</option>
+                    <option value="patient_2">patient_2</option>
+                    <option value="patient_3">patient_3</option>
+                    <option value="patient_4">patient_4</option>
+                    <option value="patient_5">patient_5</option>
+                    <option value="patient_6">patient_6</option>
+                    <option value="patient_7">patient_7</option>
+                    <option value="patient_8">patient_8</option>
+                    <option value="patient_9">patient_9</option>
+                    <option value="patient_10">patient_10</option>
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label>Action Type</label>
+                  <select id="sub-action">
+                    <option value="query">query — Read record</option>
+                    <option value="change">change — Modify record</option>
+                    <option value="create">create — Create new record</option>
+                    <option value="delete">delete — Delete record</option>
+                    <option value="print">print — Print record</option>
+                    <option value="copy">copy — Copy / transfer</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <label>Details / Notes</label>
+                <textarea
+                  id="sub-details"
+                  placeholder="Describe the reason for access (e.g. 'Pre-operative medication review')"></textarea>
+              </div>
+
+              <div class="form-cols">
+                <!-- <div class="form-row">
+                  <label>Target Audit Node</label>
+                  <select id="sub-node">
+                    <option value="http://127.0.0.1:5002">
+                      Node 1 — port 5002
+                    </option>
+                    <option value="http://127.0.0.1:5012">
+                      Node 2 — port 5012
+                    </option>
+                    <option value="http://127.0.0.1:5022">
+                      Node 3 — port 5022
+                    </option>
+                  </select>
+                </div> -->
+                <div class="form-row">
+                  <label>Submitted By (auto)</label>
+                  <input
+                    type="text"
+                    id="sub-userid"
+                    disabled
+                    placeholder="from JWT token" />
+                </div>
+              </div>
+
+              <div class="btn-row">
+                <button class="btn btn-success" onclick="submitRecord()">
+                  <span
+                    class="spinner"
+                    id="sub-spinner"
+                    style="display: none"></span>
+                  ⬡ Encrypt &amp; Submit to Blockchain
+                </button>
+                <button
+                  class="btn btn-ghost btn-sm"
+                  onclick="clearSubmitForm()">
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div>
+              <div class="card" style="margin-bottom: 16px">
+                <div
+                  class="card-header"
+                  style="margin-bottom: 12px; padding-bottom: 10px">
+                  <div class="card-title">Submission Pipeline</div>
+                </div>
+                <div
+                  style="
+                    font-family: var(--mono);
+                    font-size: 11px;
+                    color: var(--text2);
+                    line-height: 2.2;
+                  ">
+                  <div style="margin-bottom: 4px">
+                    <span style="color: var(--green)">①</span> Record JSON
+                    assembled
+                  </div>
+                  <div
+                    style="
+                      margin-left: 12px;
+                      color: var(--text3);
+                      margin-bottom: 4px;
+                    ">
+                    ↓ fetch patient AES-256 key
+                  </div>
+                  <div style="margin-bottom: 4px">
+                    <span style="color: var(--green)">②</span> Record encrypted
+                    (AES-256-CBC)
+                  </div>
+                  <div
+                    style="
+                      margin-left: 12px;
+                      color: var(--text3);
+                      margin-bottom: 4px;
+                    ">
+                    ↓ sign ciphertext with RSA-2048 private key
+                  </div>
+                  <div style="margin-bottom: 4px">
+                    <span style="color: var(--green)">③</span> Ciphertext +
+                    signature POSTed to node
+                  </div>
+                  <div
+                    style="
+                      margin-left: 12px;
+                      color: var(--text3);
+                      margin-bottom: 4px;
+                    ">
+                    ↓ node verifies signature
+                  </div>
+                  <div style="margin-bottom: 4px">
+                    <span style="color: var(--green)">④</span> Record mined into
+                    block (PoW)
+                  </div>
+                  <div
+                    style="
+                      margin-left: 12px;
+                      color: var(--text3);
+                      margin-bottom: 4px;
+                    ">
+                    ↓ block broadcast to 2 peer nodes
+                  </div>
+                  <div>
+                    <span style="color: var(--cyan)">⑤</span> Decentralised
+                    &amp; immutable ✓
+                  </div>
+                </div>
+              </div>
+
+              <div class="card" style="margin-bottom: 0">
+                <div
+                  class="card-header"
+                  style="margin-bottom: 12px; padding-bottom: 10px">
+                  <div class="card-title">Last Submission</div>
+                </div>
+                <div id="last-submission" class="info-box">
+                  <div style="color: var(--text3); font-size: 11px">
+                    No submission yet this session.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-health" class="tab-content">
+        <div class="stat-strip">
+          <div class="stat-box">
+            <div class="sb-val" id="stat-nodes">—</div>
+            <div class="sb-lbl">Nodes Online</div>
+          </div>
+          <div class="stat-box">
+            <div class="sb-val" id="stat-blocks">—</div>
+            <div class="sb-lbl">Chain Length</div>
+          </div>
+          <div class="stat-box">
+            <div class="sb-val" id="stat-records">—</div>
+            <div class="sb-lbl">Total Records</div>
+          </div>
+          <div class="stat-box">
+            <div class="sb-val" id="stat-valid">—</div>
+            <div class="sb-lbl">Validation Status</div>
+          </div>
+        </div>
+
+        <div class="node-grid" id="node-grid"></div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Block Chain — Node 1</div>
+              <div class="card-sub">
+                Visual representation of the immutable audit ledger (hover a
+                block for details)
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="refreshHealth()">
+              <span
+                class="spinner"
+                id="health-spinner"
+                style="display: none"></span>
+              ↻ Refresh
+            </button>
+          </div>
+          <div class="chain-vis" id="chain-vis">
+            <div
+              class="empty-icon"
+              style="font-size: 20px; color: var(--text3)">
+              Loading chain...
+            </div>
+          </div>
+          <div id="chain-valid-banner"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title" style="color: var(--amber)">
+                ⚠ Tamper Detection Demo
+              </div>
+              <div class="card-sub">
+                Simulate an insider attack and observe automatic detection +
+                recovery
+              </div>
+            </div>
+          </div>
+
+          <div class="tamper-demo-panel">
+            <h4>How it works</h4>
+            <p>
+              Clicking "Run Attack" directly mutates a block's data on Node 1
+              without updating its hash — exactly what a rogue DBA would do. The
+              system immediately detects the broken hash chain and reports the
+              tampered block index. "Recover" restores Node 1 by syncing from
+              honest Node 2.
+            </p>
+            <div class="btn-row">
+              <button
+                class="btn btn-danger btn-sm"
+                onclick="runTamperAttack()"
+                id="btn-tamper">
+                ⚡ Run Attack
+              </button>
+            </div>
+          </div>
+
+          <div id="tamper-log" class="tamper-log">
+            <span class="tl-info"
+              >[ System ] Tamper demo ready. Make sure at least one record has
+              been submitted first.</span
+            >
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Auth &amp; Query Server Status</div>
+            <div class="card-sub">Supporting infrastructure health</div>
+          </div>
+          <div
+            id="aux-servers"
+            style="display: flex; gap: 14px; flex-wrap: wrap"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="main.js"></script>
+  </body>
+</html>
